@@ -1,0 +1,17 @@
+brotlipy==0.7.0
+certifi==2020.12.5
+cffi @ file:///opt/concourse/worker/volumes/live/2aa8abfe-8b8d-4889-78d9-837b74c3cd64/volume/cffi_1606255119410/work
+chardet @ file:///opt/concourse/worker/volumes/live/9efbf151-b45b-463d-6340-a5c399bf00b7/volume/chardet_1607706825988/work
+cryptography @ file:///opt/concourse/worker/volumes/live/41c3d62a-f1f8-46ce-414a-9adaf4ea7d96/volume/cryptography_1607636752064/work
+idna @ file:///tmp/build/80754af9/idna_1593446292537/work
+mkl-fft==1.2.0
+mkl-random==1.1.1
+mkl-service==2.3.0
+numpy @ file:///opt/concourse/worker/volumes/live/a1b5ea96-b05c-40ba-5dfb-4542ece1c186/volume/numpy_and_numpy_base_1603491228242/work
+pycparser @ file:///tmp/build/80754af9/pycparser_1594388511720/work
+pyOpenSSL @ file:///tmp/build/80754af9/pyopenssl_1608057966937/work
+PySocks @ file:///opt/concourse/worker/volumes/live/ef943889-94fc-4539-798d-461c60b77804/volume/pysocks_1605305801690/work
+requests @ file:///tmp/build/80754af9/requests_1608241421344/work
+six @ file:///opt/concourse/worker/volumes/live/f983ba11-c9fe-4dff-7ce7-d89b95b09771/volume/six_1605205318156/work
+torch @ file:///opt/concourse/worker/volumes/live/ce36451d-3e06-4b8b-7906-520747b751e1/volume/pytorch_1596721440076/work
+urllib3 @ file:///tmp/build/80754af9/urllib3_1606938623459/work
