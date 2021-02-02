@@ -1,6 +1,7 @@
 from zensor import *
 from data_loader import *
 
+# TODO - NOT WORKING AS OF REFACTOR
 
 class FNN:
 
