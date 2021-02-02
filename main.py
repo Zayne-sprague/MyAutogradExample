@@ -1,5 +1,5 @@
 import torch
-from playground.autograd.zensor import Zensor
+from zensor import Zensor
 
 # region old stuff
 def test(x):
