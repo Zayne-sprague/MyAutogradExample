@@ -1,4 +1,4 @@
-# MyAutogradExample
+# MyAutogradExample (major refactor inc)
 
 ![Computation Graph Image](./misc/imgs/computation_graph.png "Example Computation Graph")
 
