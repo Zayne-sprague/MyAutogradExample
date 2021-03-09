@@ -39,6 +39,10 @@ class Zensor:
         output = Transpose()(self, axis=axis)
         return output
 
+    def unsqueeze(self, axis=None):
+        self.value = np.expand_dims(self.value, axis)
+        return self
+
     def sum(self, axis=None):
         output = Sum()(self, axis=axis)
         return output
@@ -57,7 +61,17 @@ class Zensor:
         output = Exp()(self)
         return output
 
+    def square(self):
+        output = Sqr()(self)
+        return output
+
+    def sqrt(self):
+        output = Sqrt()(self)
+        return output
+
     def __mul__(self, other):
+        if not isinstance(other, Zensor):
+            other = Zensor(other)
         output = Mult()(self, other)
         return output
 
@@ -66,6 +80,8 @@ class Zensor:
         return output
 
     def __add__(self, other):
+        if not isinstance(other, Zensor):
+            other = Zensor(other)
         output = Add()(self, other)
         return output
 
@@ -74,6 +90,8 @@ class Zensor:
         return output
 
     def __sub__(self, other):
+        if not isinstance(other, Zensor):
+            other = Zensor(other)
         output = Subt()(self, other)
         return output
 
@@ -82,6 +100,9 @@ class Zensor:
         return output
 
     def __truediv__(self, other):
+        if not isinstance(other, Zensor):
+            other = Zensor(other)
+
         output = Div()(self, other)
         return output
 
@@ -115,7 +136,7 @@ class Zensor:
             return
 
         if not isinstance(grad, np.ndarray) and grad == None:
-            self.grad = np.array([1.])
+            self.grad = np.array(1.)
 
         self.computed_backward = True
 
@@ -137,9 +158,16 @@ class Zensor:
             if not x.computed_backward:
                 x.backward(grad.copy())
 
-def zSigmoid(z):
+def zSigmoid(z:Zensor):
+    # z = -z
+    # z = z.exp()
+    # z = z + 1
+    # z = Zensor(1) / z
     output = Sigmoid()(z)
-    return output
+    return z
+
+def zRelu(z:Zensor):
+    return ReLU()(z)
 
 def zArgmax(z, axis=None):
     return Zensor(np.argmax(z.value, axis=axis))

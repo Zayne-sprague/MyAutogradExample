@@ -1,6 +1,7 @@
 import numpy as np
 from autograd import Function
 from autograd import GraphPartial
+from .util import unbroadcast
 
 # TODO - separate these out into a more manageable format
 
@@ -112,9 +113,17 @@ class Log(Function):
         arg0 = args[0]
 
         out = self.__creator__(np.log(arg0.value))
-        out.graph = GraphPartial([arg0 ], self.name, out, lambda g, a0: (g / a0,))
+        out.graph = GraphPartial([arg0 ], self.name, out, self.grad_fn)
 
         return out
+
+    @staticmethod
+    def grad_fn(g, a0):
+        # if np.ndim(g) == 1:
+        #     g = np.expand_dims(g, 1)
+        # if np.ndim(a0) == 1:
+        #     a0 = np.expand_dims(a0, 1)
+        return g / a0
 
 class Neg(Function):
     def __init__(self):
@@ -140,6 +149,18 @@ class Sqr(Function):
 
         return out
 
+class Sqrt(Function):
+    def __init__(self):
+        super().__init__("sqr")
+
+    def __call__(self, *args, **kwargs):
+        arg0 = args[0]
+
+        out = self.__creator__(np.sqrt(arg0.value))
+        out.graph = GraphPartial([arg0], self.name, out, lambda g, a0: (g * 0.5 * a0 ** -0.5))
+
+        return out
+
 
 class MatMult(Function):
     def __init__(self):
@@ -149,20 +170,58 @@ class MatMult(Function):
         arg0 = args[0]
         arg1 = args[1]
 
-        out = self.__creator__(np.dot(arg0.value, arg1.value))
+        out = self.__creator__(np.matmul(arg0.value, arg1.value))
         out.graph = GraphPartial([arg0, arg1], self.name, out, self.grad_fn)
 
         return out
 
     @staticmethod
     def grad_fn(g, a0, a1):
-        if len(g.shape) == 1 and len(g) == 1:
-            a0_res = g * a1.transpose()
-            a1_res = g * a0.transpose()
-        else:
-            a0_res = np.matmul(g, a1.transpose())
-            a1_res = np.matmul(a0.transpose(), g)
-        return a0_res, a1_res
+        a0_meta = __metadata__(a0)
+        a1_meta = __metadata__(a1)
+        g_meta = __metadata__(g)
+
+        a0_shape, a0_ndim, _, _ = a0_meta
+        a1_shape, a1_ndim, _, _ = a1_meta
+        g_shape, g_ndim, _, _ = g_meta
+
+        def a0_result(a0, a1, g):
+            if g_ndim == 0:
+                return g * a1
+
+            if a0_ndim == 1:
+                g = np.expand_dims(g, g_ndim - 1)
+            if a1_ndim == 1:
+                a1 = np.expand_dims(a1, 0)
+                g = np.expand_dims(g, g_ndim)
+            else:
+                a1 = np.swapaxes(a1, a1_ndim - 2, a1_ndim - 1)
+
+            return np.matmul(g, a1)
+
+        def a1_result(a0, a1, g):
+            if g_ndim == 0:
+                return g * a0
+
+            if a1_ndim == 1:
+                g = np.expand_dims(g, g_ndim)
+            if a0_ndim == 1:
+                a0 = np.expand_dims(a0, 1)
+                g = np.expand_dims(g, g_ndim - 1)
+            elif a0_ndim == 2:
+                a0 = np.swapaxes(a0, a0_ndim - 2, a0_ndim - 1)
+
+            out = np.matmul(a0, g)
+            if a1_ndim == 1:
+                out = out.squeeze(g_ndim - 1)
+            return out
+
+
+        return (
+                    unbroadcast(a0_result(a0, a1, g), a0_meta),
+                    unbroadcast(a1_result(a0, a1, g), a1_meta)
+                )
+
 
 
 class Transpose(Function):
@@ -201,7 +260,8 @@ class Sum(Function):
 
     @staticmethod
     def grad_fn(g, a0, shape):
-        return (np.array([g.tolist(), ] * shape),)
+        # return (np.array([g.tolist(), ] * shape),)
+        return (np.ones_like(a0) * g, )
 
 
 class Sigmoid(Function):
@@ -221,6 +281,26 @@ class Sigmoid(Function):
     def grad_fn(g, a0):
         return (g * (np.exp(-a0) / (np.square(1.0 + np.exp(-a0)))),)
 
+
+class ReLU(Function):
+    def __init__(self):
+        super().__init__("sum")
+
+    def __call__(self, *args, **kwargs):
+        arg0 = args[0]
+
+        v = arg0.value
+        # mask =np.ma.masked_less_equal(v, 0)
+        mask = np.ma.masked_greater(v, 0)
+        v[v<=0] = 0
+        out = self.__creator__(v)
+        out.graph = GraphPartial([arg0], self.name, out, lambda g, a0 : self.grad_fn(g, a0, mask))
+
+        return out
+
+    @staticmethod
+    def grad_fn(g, a0, mask):
+        return ((mask * g).filled(0),)
 
 # Taken from the original Autograd code
 def __metadata__(x):
